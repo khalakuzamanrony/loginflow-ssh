@@ -1,0 +1,50 @@
+name: Playwright Tests - Scheduled with Telegram Alerts
+
+on:
+  schedule:
+    - cron: '0 6 * * 4'  # Every Thursday 12PM BDT (6AM UTC)
+  workflow_dispatch:      # Allow manual triggering
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # Standard Playwright setup
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      
+      # Run tests and capture output
+      - name: Run tests
+        id: run-tests
+        run: |
+          npx playwright test | tee test-output.txt
+          echo "summary=$(cat test-output.txt | grep -E 'passed|failed|skipped')" >> $GITHUB_OUTPUT
+      
+      # Upload HTML report
+      - uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      # Telegram notification with rich formatting
+      - name: Notify Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: 5089256247
+          token: 8022200668:AAGz4_ldksw63HHiKQkF0hGtXBemOZ3qxP0
+          message: |
+            *🚀 Playwright Test Results*
+            ▫️ *Repo:* ${{ github.repository }}
+            ▫️ *Status:* ${{ job.status }}
+            ▫️ *Trigger:* ${{ github.event_name }}
+            ▫️ *Summary:* 
+            ${{ steps.run-tests.outputs.summary }}
+
+            📊 [View Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            📂 [Download Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)
+        if: always()
