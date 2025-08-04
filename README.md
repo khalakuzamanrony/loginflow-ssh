@@ -95,3 +95,26 @@ To receive notifications in Slack, you need to create a webhook URL:
 4. **Add to GitHub Secrets**:
    - Add the webhook URL as a secret named `SLACK_WEBHOOK_URL` in your GitHub repository
    - Make sure to include the complete URL starting with "https://hooks.slack.com/services/"
+
+### Troubleshooting Slack Notifications
+
+If you encounter errors with Slack notifications such as `no_text` or `Request failed with status code 400`, follow these steps:
+
+1. **Check Payload Format**:
+   - The Slack GitHub Action requires a properly formatted JSON payload
+   - Our workflow uses the `payload` parameter with a JSON structure that includes:
+     - A `text` field for the fallback message
+     - A `blocks` array with formatted content
+
+2. **Verify Webhook URL**:
+   - Ensure your webhook URL is correctly formatted and valid
+   - The URL should start with `https://hooks.slack.com/services/`
+   - Check that the secret is properly set in GitHub Secrets
+
+3. **Test Webhook Manually**:
+   - You can test your webhook with a simple cURL command:
+   ```
+   curl -X POST -H 'Content-type: application/json' --data '{"text":"Hello, World!"}' YOUR_WEBHOOK_URL
+   ```
+   - Replace `YOUR_WEBHOOK_URL` with your actual webhook URL
+   - If successful, you should see a message in your Slack channel

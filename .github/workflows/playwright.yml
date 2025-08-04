@@ -55,10 +55,17 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
-          slack-message: |
-            🔔 *Playwright Test Results*
-            • *Status*: ${{ job.status }}
-            • *Repository*: ${{ github.repository }}
-            • *Report*: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            • *Commit*: ${{ github.sha }}
+          payload: |
+            {
+              "text": "🔔 *Playwright Test Results*",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "🔔 *Playwright Test Results*\n• *Status*: ${{ job.status }}\n• *Repository*: ${{ github.repository }}\n• *Report*: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n• *Commit*: ${{ github.sha }}"
+                  }
+                }
+              ]
+            }
         if: always()
