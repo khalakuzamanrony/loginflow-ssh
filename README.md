@@ -20,6 +20,7 @@ To run this workflow in GitHub Actions, you need to set up the following secrets
 3. Add the following repository secrets:
    - `TELEGRAM_TO`: Your Telegram chat ID
    - `TELEGRAM_TOKEN`: Your Telegram bot token
+   - `SLACK_WEBHOOK_URL`: Your Slack webhook URL for notifications
 
 ## Project Structure
 - `tests/`: Contains test files
@@ -32,7 +33,8 @@ The GitHub workflow is configured to:
 1. Run tests automatically every Thursday
 2. Allow manual triggering
 3. Send test results to Telegram
-4. Upload test reports as artifacts
+4. Send test results to Slack
+5. Upload test reports as artifacts
 
 ## Environment Variables
 Store your sensitive information in the `.env` file locally and in GitHub Secrets for CI/CD:
@@ -40,6 +42,7 @@ Store your sensitive information in the `.env` file locally and in GitHub Secret
 ```
 TELEGRAM_TO=your_telegram_chat_id
 TELEGRAM_TOKEN=your_telegram_bot_token
+SLACK_WEBHOOK_URL=your_slack_webhook_url
 ```
 
 **Note:** Never commit the `.env` file to your repository. It's already added to `.gitignore`.
@@ -70,3 +73,25 @@ If you encounter this error in GitHub Actions, it means your Telegram chat ID is
 4. **Update GitHub Secrets**:
    - Make sure to use the numeric chat ID (e.g., `123456789`) for the `TELEGRAM_TO` secret
    - Double-check that your `TELEGRAM_TOKEN` is correct and includes the full token
+
+### Setting Up Slack Webhook
+To receive notifications in Slack, you need to create a webhook URL:
+
+1. **Create a Slack App**:
+   - Go to [Slack API Apps page](https://api.slack.com/apps)
+   - Click "Create New App" and choose "From scratch"
+   - Name your app and select your workspace
+
+2. **Enable Incoming Webhooks**:
+   - In your app settings, go to "Incoming Webhooks"
+   - Toggle "Activate Incoming Webhooks" to On
+   - Click "Add New Webhook to Workspace"
+   - Select the channel where you want to receive notifications
+
+3. **Copy the Webhook URL**:
+   - After authorizing, you'll see a new webhook URL
+   - Copy this URL - this is your `SLACK_WEBHOOK_URL`
+
+4. **Add to GitHub Secrets**:
+   - Add the webhook URL as a secret named `SLACK_WEBHOOK_URL` in your GitHub repository
+   - Make sure to include the complete URL starting with "https://hooks.slack.com/services/"

@@ -48,3 +48,17 @@ jobs:
             📊 [View Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
             📂 [Download Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)
         if: always()
+        
+      # Slack notification
+      - name: Send Slack Notification
+        uses: slackapi/slack-github-action@v1.24.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          slack-message: |
+            🔔 *Playwright Test Results*
+            • *Status*: ${{ job.status }}
+            • *Repository*: ${{ github.repository }}
+            • *Report*: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            • *Commit*: ${{ github.sha }}
+        if: always()
