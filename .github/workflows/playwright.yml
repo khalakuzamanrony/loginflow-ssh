@@ -15,14 +15,21 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - run: npx playwright install --with-deps
+      - run: npx playwright install
       
-      # Run tests and capture output
+      # Run tests and capture detailed output
       - name: Run tests
         id: run-tests
         run: |
           npx playwright test | tee test-output.txt
           echo "summary=$(cat test-output.txt | grep -E 'passed|failed|skipped')" >> $GITHUB_OUTPUT
+          echo "workflow_name=Playwright Tests" >> $GITHUB_OUTPUT
+          
+          # Extract test names and results
+          echo "test_names=$(cat test-output.txt | grep -E '\[.*\]' | cut -d ' ' -f 2- | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
+          echo "passed_count=$(cat test-output.txt | grep -E 'passed' | grep -oE '[0-9]+ passed' | grep -oE '[0-9]+')" >> $GITHUB_OUTPUT
+          echo "failed_count=$(cat test-output.txt | grep -E 'failed' | grep -oE '[0-9]+ failed' | grep -oE '[0-9]+')" >> $GITHUB_OUTPUT
+          echo "skipped_count=$(cat test-output.txt | grep -E 'skipped' | grep -oE '[0-9]+ skipped' | grep -oE '[0-9]+')" >> $GITHUB_OUTPUT
       
       # Upload HTML report
       - uses: actions/upload-artifact@v4
@@ -40,13 +47,22 @@ jobs:
           message: |
             *🚀 Playwright Test Results*
             ▫️ *Repo:* ${{ github.repository }}
+            ▫️ *Workflow:* ${{ steps.run-tests.outputs.workflow_name }}
             ▫️ *Status:* ${{ job.status }}
             ▫️ *Trigger:* ${{ github.event_name }}
-            ▫️ *Summary:* 
+            
+            *📊 Test Results:*
+            ✅ *Passed:* ${{ steps.run-tests.outputs.passed_count || '0' }}
+            ❌ *Failed:* ${{ steps.run-tests.outputs.failed_count || '0' }}
+            ⏭️ *Skipped:* ${{ steps.run-tests.outputs.skipped_count || '0' }}
+            
+            *🧪 Tests:*
+            ${{ steps.run-tests.outputs.test_names }}
+            
+            *📝 Summary:* 
             ${{ steps.run-tests.outputs.summary }}
 
-            📊 [View Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            📂 [Download Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)
+            
         if: always()
         
       # Slack notification
@@ -57,14 +73,97 @@ jobs:
         with:
           payload: |
             {
-              "text": "🔔 *Playwright Test Results*",
+              "text": "🔔 Playwright Test Results: ${{ job.status }}",
               "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚀 Playwright Test Results",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Workflow:*\n${{ steps.run-tests.outputs.workflow_name }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n${{ job.status }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Trigger:*\n${{ github.event_name }}"
+                    }
+                  ]
+                },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "🔔 *Playwright Test Results*\n• *Status*: ${{ job.status }}\n• *Repository*: ${{ github.repository }}\n• *Report*: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n• *Commit*: ${{ github.sha }}"
+                    "text": "*Test Results:*"
                   }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "✅ *Passed:*\n${{ steps.run-tests.outputs.passed_count || '0' }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "❌ *Failed:*\n${{ steps.run-tests.outputs.failed_count || '0' }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "⏭️ *Skipped:*\n${{ steps.run-tests.outputs.skipped_count || '0' }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Tests:*\n${{ steps.run-tests.outputs.test_names }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Summary:*\n${{ steps.run-tests.outputs.summary }}"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Report",
+                        "emoji": true
+                      },
+                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Download Artifacts",
+                        "emoji": true
+                      },
+                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts"
+                    }
+                  ]
                 }
               ]
             }

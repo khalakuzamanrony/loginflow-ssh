@@ -32,8 +32,19 @@ To run this workflow in GitHub Actions, you need to set up the following secrets
 The GitHub workflow is configured to:
 1. Run tests automatically every Thursday
 2. Allow manual triggering
-3. Send test results to Telegram
-4. Send test results to Slack
+3. Send detailed test results to Telegram with the following information:
+   - Repository name
+   - Workflow name
+   - Test status
+   - Trigger event
+   - Test counts (passed, failed, skipped)
+   - List of test names
+   - Detailed summary
+4. Send detailed test results to Slack with a rich interactive format including:
+   - Repository and workflow information
+   - Test statistics
+   - List of tests
+   - Interactive buttons to view reports and artifacts
 5. Upload test reports as artifacts
 
 ## Environment Variables
