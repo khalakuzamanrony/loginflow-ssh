@@ -129,3 +129,28 @@ If you encounter errors with Slack notifications such as `no_text` or `Request f
    ```
    - Replace `YOUR_WEBHOOK_URL` with your actual webhook URL
    - If successful, you should see a message in your Slack channel
+
+### Troubleshooting Test Output Processing
+
+If you encounter errors like `Unable to process file command 'output' successfully` or `Invalid format` when running the GitHub workflow, it may be related to how test results are being processed. The workflow has been updated to handle these issues, but here are some troubleshooting steps:
+
+1. **Check Test Output Format**:
+   - The workflow extracts test results using grep, awk, and sed commands
+   - If your test output format changes, you may need to update these commands
+   - The current implementation handles the standard Playwright output format
+
+2. **Default Values for Missing Data**:
+   - The workflow now provides default values ("0") for missing test counts
+   - If test results don't include passed/failed/skipped counts, the workflow will use these defaults
+
+3. **Error Handling**:
+   - Commands now include error handling with `|| true` and `|| echo "default value"`
+   - This prevents the workflow from failing if a command doesn't find matching output
+
+4. **Manual Testing**:
+   - You can test the output processing locally by running:
+   ```
+   npx playwright test | tee test-output.txt
+   cat test-output.txt | grep -E '[0-9]+ passed.*[0-9]+s' | tail -1
+   ```
+   - This should show the summary line that will be used in notifications

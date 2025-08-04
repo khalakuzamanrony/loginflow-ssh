@@ -18,18 +18,34 @@ jobs:
       - run: npx playwright install --with-deps
       
       # Run tests and capture detailed output
+      # Fixed output processing to handle the format correctly and avoid 'Invalid format' errors
       - name: Run tests
         id: run-tests
         run: |
-          npx playwright test | tee test-output.txt
-          echo "summary=$(cat test-output.txt | grep -E 'passed|failed|skipped')" >> $GITHUB_OUTPUT
+          npx playwright test | tee test-output.txt || true
+          # Extract summary safely
+          SUMMARY=$(cat test-output.txt | grep -E '[0-9]+ passed.*[0-9]+s' | tail -1 || echo "Test completed")
+          echo "summary=$SUMMARY" >> $GITHUB_OUTPUT
           echo "workflow_name=Playwright Tests" >> $GITHUB_OUTPUT
           
-          # Extract test names and results
-          echo "test_names=$(cat test-output.txt | grep -E '\[.*\]' | cut -d ' ' -f 2- | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
-          echo "passed_count=$(cat test-output.txt | grep -E 'passed' | grep -oE '[0-9]+ passed' | grep -oE '[0-9]+')" >> $GITHUB_OUTPUT
-          echo "failed_count=$(cat test-output.txt | grep -E 'failed' | grep -oE '[0-9]+ failed' | grep -oE '[0-9]+')" >> $GITHUB_OUTPUT
-          echo "skipped_count=$(cat test-output.txt | grep -E 'skipped' | grep -oE '[0-9]+ skipped' | grep -oE '[0-9]+')" >> $GITHUB_OUTPUT
+          # Extract test names and results more reliably
+          TEST_NAMES=$(cat test-output.txt | grep -E '✓.*\[.*\]' | sed -E 's/^[^\[]*\[(.*?)\].*› (.*)/\1: \2/' | tr '\n' ',' | sed 's/,$//' || echo "No tests found")
+          echo "test_names=$TEST_NAMES" >> $GITHUB_OUTPUT
+          
+          # Extract counts safely with defaults
+          # Use awk to extract numbers more reliably
+          PASSED=$(cat test-output.txt | grep -E '[0-9]+ passed' | awk '{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+$/) {print $i; exit}}' || echo "0")
+          FAILED=$(cat test-output.txt | grep -E '[0-9]+ failed' | awk '{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+$/) {print $i; exit}}' || echo "0")
+          SKIPPED=$(cat test-output.txt | grep -E '[0-9]+ skipped' | awk '{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+$/) {print $i; exit}}' || echo "0")
+          
+          # Set default values if empty
+          [ -z "$PASSED" ] && PASSED="0"
+          [ -z "$FAILED" ] && FAILED="0"
+          [ -z "$SKIPPED" ] && SKIPPED="0"
+          
+          echo "passed_count=$PASSED" >> $GITHUB_OUTPUT
+          echo "failed_count=$FAILED" >> $GITHUB_OUTPUT
+          echo "skipped_count=$SKIPPED" >> $GITHUB_OUTPUT
       
       # Upload HTML report
       - uses: actions/upload-artifact@v4
