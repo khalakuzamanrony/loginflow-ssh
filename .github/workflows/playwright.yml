@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - run: npx playwright install
+      - run: npx playwright install --with-deps
       
       # Run tests and capture detailed output
       - name: Run tests
